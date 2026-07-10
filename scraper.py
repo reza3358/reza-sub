@@ -1,14 +1,14 @@
 import urllib.request
 import base64
 
-# دو منبع فوق‌العاده فعال و پایدار در سال ۲۰۲۶
+
 SOURCES = [
     "https://raw.githubusercontent.com/barry-far/V2ray-Configs/main/All_Configs_Sub.txt",
     "https://raw.githubusercontent.com/Borders-Freedom/freedom/main/All_Configs_Sub.txt"
     "https://raw.githubusercontent.com/w1770946466/auto_v2ray/main/v2ray.txt",
     "https://raw.githubusercontent.com/tbbatbb/Proxy/master/v2ray/v2ray.txt",
     "https://raw.githubusercontent.com/vfarid/v2ray-share/main/extracted/actives_under_2500ms.txt"
-]
+
 ]
 
 def fetch_and_clean():
