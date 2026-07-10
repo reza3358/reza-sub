@@ -1,11 +1,10 @@
 import urllib.request
 import base64
-import re
 
-# منابع جدید و همیشه فعال گیت‌هاب برای جمع‌آوری کانفیگ
+# دو منبع فوق‌العاده فعال و پایدار در سال ۲۰۲۶
 SOURCES = [
-    "https://raw.githubusercontent.com/Deidara61/V2ray-Configs/main/All_Configs_Sub.txt",
-    "https://raw.githubusercontent.com/yebekhe/TVC/main/v2ray/sub"
+    "https://raw.githubusercontent.com/barry-far/V2ray-Configs/main/All_Configs_Sub.txt",
+    "https://raw.githubusercontent.com/Borders-Freedom/freedom/main/All_Configs_Sub.txt"
 ]
 
 def fetch_and_clean():
@@ -17,7 +16,7 @@ def fetch_and_clean():
             with urllib.request.urlopen(req) as response:
                 content = response.read().decode('utf-8')
                 
-                # اگر کل متن با Base64 کدگذاری شده بود
+                # بررسی اینکه آیا کل متن Base64 است یا خیر
                 if "vless://" not in content and "vmess://" not in content:
                     try:
                         content = base64.b64decode(content).decode('utf-8')
@@ -33,6 +32,10 @@ def fetch_and_clean():
             print(f"Error fetching from {url}: {e}")
             
     unique_configs = list(set(all_configs))
+    
+    # اگر هیچ کانفیگی پیدا نشد، یک کانفیگ تست می‌نویسیم تا فایل هیچ‌وقت خالی نماند
+    if not unique_configs:
+        unique_configs = ["vless://dummy_config_if_sources_were_empty@127.0.0.1:443?encryption=none&security=reality#NoConfigsFound"]
     
     with open("sub.txt", "w", encoding="utf-8") as f:
         f.write("\n".join(unique_configs))
