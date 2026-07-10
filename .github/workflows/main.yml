@@ -1,0 +1,29 @@
+name: Auto Fetch Configs
+
+on:
+  schedule:
+    - cron: '0 */6 * * *' # هر ۶ ساعت یک‌بار خودکار اجرا می‌شود
+  workflow_dispatch: # دکمه اجرای دستی را هم به ما می‌دهد
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Run Scraper
+      run: python scraper.py
+
+    - name: Commit and Push changes
+      run: |
+        git config --local user.email "actions@github.com"
+        git config --local user.name "GitHub Actions"
+        git add sub.txt
+        git commit -m "Update configs automatically" || exit 0
+        git push
