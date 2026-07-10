@@ -1,0 +1,1 @@
+vless://dummy_config_if_sources_were_empty@127.0.0.1:443?encryption=none&security=reality#NoConfigsFound
