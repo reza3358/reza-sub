@@ -1,49 +1,80 @@
 import urllib.request
 import base64
+import re
 
-
-SOURCES = [
-    "https://raw.githubusercontent.com/barry-far/V2ray-Configs/main/All_Configs_Sub.txt",
-    "https://raw.githubusercontent.com/Borders-Freedom/freedom/main/All_Configs_Sub.txt"
-    "https://raw.githubusercontent.com/w1770946466/auto_v2ray/main/v2ray.txt",
-    "https://raw.githubusercontent.com/tbbatbb/Proxy/master/v2ray/v2ray.txt",
-    "https://raw.githubusercontent.com/vfarid/v2ray-share/main/extracted/actives_under_2500ms.txt"
-
+# لیست آدرس‌های گیت‌هاب که فرستادید
+URLS = [
+    "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/sub_merge_base64.txt",
+    "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/sub_merge.txt",
+    "https://raw.githubusercontent.com/free-nodes/v2rayfree/main/v2",
+    "https://raw.githubusercontent.com/Epodonios/v2ray-configs/main/All_Configs_Sub.txt",
+    "https://raw.githubusercontent.com/MatinGhanbari/v2ray-configs/main/subscriptions/base64.txt",
+    "https://raw.githubusercontent.com/hans-thomas/v2ray-subscription/main/servers.txt",
+    "https://raw.githubusercontent.com/ermaozi/get_subscribe/main/subscribe/v2ray.txt",
+    "https://raw.githubusercontent.com/aiboboxx/v2rayfree/main/v2",
+    "https://raw.githubusercontent.com/Pawdroid/Free-servers/main/sub",
+    "https://raw.githubusercontent.com/mfuu/v2ray/master/v2ray"
 ]
 
-def fetch_and_clean():
-    all_configs = []
+def is_base64(sb):
+    """بررسی اینکه آیا متن دریافتی کدگذاری Base64 است یا خیر"""
+    try:
+        if isinstance(sb, str):
+            sb_bytes = sb.encode('ascii')
+        else:
+            sb_bytes = sb
+        return base64.b64encode(base64.b64decode(sb_bytes)) == sb_bytes
+    except Exception:
+        return False
+
+def decode_base64(data):
+    """رمزگشایی دیتای Base64 به متن معمولی"""
+    try:
+        # اضافه کردن paddingهای گمشده برای جلوگیری از خطای طول رشته
+        missing_padding = len(data) % 4
+        if missing_padding:
+            data += '=' * (4 - missing_padding)
+        return base64.b64decode(data).decode('utf-8', errors='ignore')
+    except Exception:
+        return data
+
+def scrape():
+    all_configs = set() # استفاده از set برای حذف خودکار کانفیگ‌های تکراری
     
-    for url in SOURCES:
+    print("شروع فرآیند جمع‌آوری کانفیگ‌ها...")
+    
+    for url in URLS:
         try:
+            print(f"در حال دریافت از: {url}")
+            # ایجاد درخواست با User-Agent برای جلوگیری از مسدود شدن توسط گیت‌هاب
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req) as response:
-                content = response.read().decode('utf-8')
+            with urllib.request.urlopen(req, timeout=10) as response:
+                content = response.read().decode('utf-8', errors='ignore').strip()
                 
-                # بررسی اینکه آیا کل متن Base64 است یا خیر
-                if "vless://" not in content and "vmess://" not in content:
-                    try:
-                        content = base64.b64decode(content).decode('utf-8')
-                    except:
-                        pass
+                # اگر کل فایل Base64 بود آن را باز کند
+                if is_base64(content):
+                    content = decode_base64(content)
                 
-                for line in content.splitlines():
+                # تک‌تک خطوط فایل را بررسی کند
+                lines = content.splitlines()
+                for line in lines:
                     line = line.strip()
-                    if line.startswith(("vless://", "trojan://", "ss://")):
-                        if "@" in line:
-                            all_configs.append(line)
+                    # بررسی پروتکل‌های معروف مثل vless, vmess, ss, trojan
+                    if any(line.startswith(proto) for proto in ["vless://", "vmess://", "ss://", "trojan://", "shadowsocks://"]):
+                        all_configs.add(line)
+                        
         except Exception as e:
-            print(f"Error fetching from {url}: {e}")
-            
-    unique_configs = list(set(all_configs))
-    
-    # اگر هیچ کانفیگی پیدا نشد، یک کانفیگ تست می‌نویسیم تا فایل هیچ‌وقت خالی نماند
-    if not unique_configs:
-        unique_configs = ["vless://dummy_config_if_sources_were_empty@127.0.0.1:443?encryption=none&security=reality#NoConfigsFound"]
-    
-    with open("sub.txt", "w", encoding="utf-8") as f:
-        f.write("\n".join(unique_configs))
-    print(f"Successfully saved {len(unique_configs)} configs.")
+            print(f"خطا در دریافت این لینک: {e}")
+
+    # ذخیره کانفیگ‌های استخراج شده در یک فایل متنی
+    output_file = "sub.txt"
+    try:
+        with open(output_file, "w", encoding="utf-8") as f:
+            for config in sorted(all_configs):
+                f.write(config + "\n")
+        print(f"\nعملیات با موفقیت پایان یافت! {len(all_configs)} کانفیگ یکتا در فایل '{output_file}' ذخیره شد.")
+    except Exception as e:
+        print(f"خطا در ذخیره‌سازی فایل خروجی: {e}")
 
 if __name__ == "__main__":
-    fetch_and_clean()
+    scrape()
